@@ -2,66 +2,56 @@ package cmd
 
 import (
 	"errors"
-	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
+
+	"archiver/lib/vlc"
 )
 
 var vlcCmd = &cobra.Command{
 	Use:   "vlc",
-	Short: "using varible-lenght code",
+	Short: "Pack file using variable-length code",
 	Run:   pack,
 }
 
-var ErrEmptyPath = errors.New("Вы не указали путь до файла")
+const packedExtension = "vlc"
 
-const packageExtengen = "vlc"
+var ErrEmptyPath = errors.New("path to file is not specified")
 
 func pack(_ *cobra.Command, args []string) {
-	if len(args) == 0 {
-		handErr(ErrEmptyPath)
+	if len(args) == 0 || args[0] == "" {
+		handleErr(ErrEmptyPath)
 	}
+
 	filePath := args[0]
 
-	read, err := os.Open(filePath)
+	r, err := os.Open(filePath)
 	if err != nil {
-		handErr(err)
+		handleErr(err)
 	}
+	defer r.Close()
 
-	defer read.Close()
-
-	var data []byte
-	for {
-		buf := make([]byte, 32)
-		n, err := read.Read(buf)
-		if n > 0 {
-			data = append(data, buf[:n]...)
-		}
-		if err != nil {
-			if err != io.EOF {
-				panic(err)
-			}
-			break
-		}
-	}
-
-	fmt.Println(string(data))
-
-	err = ioutil.WriteFile(packedFileName(filePath), data, 0644)
+	data, err := io.ReadAll(r)
 	if err != nil {
-		handErr(err)
+		handleErr(err)
 	}
 
+	packed := vlc.Encode(string(data))
+
+	err = os.WriteFile(packedFileName(filePath), []byte(packed), 0644)
+	if err != nil {
+		handleErr(err)
+	}
 }
 
 func packedFileName(path string) string {
 	fileName := filepath.Base(path)
-	return strings.TrimSuffix(fileName, filepath.Ext(fileName)) + "." + packageExtengen
+
+	return strings.TrimSuffix(fileName, filepath.Ext(fileName)) + "." + packedExtension
 }
 
 func init() {

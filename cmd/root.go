@@ -8,16 +8,16 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Short: "Simple Archivator",
+	Short: "Simple archiver",
 }
 
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		handErr(err)
+		handleErr(err)
 	}
 }
 
-func handErr(err error) {
+func handleErr(err error) {
 	_, _ = fmt.Fprintln(os.Stderr, err)
 	os.Exit(1)
 }
