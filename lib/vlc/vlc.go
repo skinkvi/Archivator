@@ -1,24 +1,9 @@
 package vlc
 
 import (
-	"fmt"
-	"strconv"
 	"strings"
 	"unicode"
-	"unicode/utf8"
 )
-
-type BinaryChunks []BinaryChunk
-
-type BinaryChunk string
-
-type HexChunks []HexChunk
-
-type HexChunk string
-
-type encodingTable map[rune]string
-
-const chunksSize = 8
 
 func Encode(str string) string {
 	str = prepareText(str)
@@ -28,87 +13,14 @@ func Encode(str string) string {
 	return chunks.ToHex().ToString()
 }
 
-func (hcs HexChunks) ToString() string {
-	const sep = " "
+func Decode(encodedText string) string {
+	//hChanks := NewHexChunks(encodedText)
 
-	switch len(hcs) {
-	case 0:
-		return ""
-	case 1:
-		return string(hcs[0])
-	}
+	//bChunk := hChanks.ToBinary()
 
-	var buf strings.Builder
+	//bString := bChunk.Join()
 
-	buf.WriteString(string(hcs[0]))
-
-	for _, hc := range hcs[1:] {
-		buf.WriteString(sep)
-		buf.WriteString(string(hc))
-	}
-
-	return buf.String()
-}
-
-func (bcs BinaryChunks) ToHex() HexChunks {
-	res := make(HexChunks, 0, len(bcs))
-
-	for _, chunk := range bcs {
-		hexChunk := chunk.ToHex()
-
-		res = append(res, hexChunk)
-	}
-
-	return res
-}
-
-func (bc BinaryChunk) ToHex() HexChunk {
-	num, err := strconv.ParseUint(string(bc), 2, chunksSize)
-	if err != nil {
-		panic("can't parse binary chunk: " + err.Error())
-	}
-
-	res := strings.ToUpper(fmt.Sprintf("%x", num))
-
-	if len(res) == 1 {
-		res = "0" + res
-	}
-
-	return HexChunk(res)
-}
-
-// splitByChunks splits binary string by chunks with given size,
-// i.g.: '100101011001010110010101' -> '10010101 10010101 10010101'
-func splitByChunks(bStr string, chunkSize int) BinaryChunks {
-	strLen := utf8.RuneCountInString(bStr)
-
-	chunksCount := strLen / chunkSize
-
-	if strLen/chunkSize != 0 {
-		chunksCount++
-	}
-
-	res := make(BinaryChunks, 0, chunksCount)
-
-	var buf strings.Builder
-
-	for i, ch := range bStr {
-		buf.WriteString(string(ch))
-
-		if (i+1)%chunkSize == 0 {
-			res = append(res, BinaryChunk(buf.String()))
-			buf.Reset()
-		}
-	}
-
-	if buf.Len() != 0 {
-		lastChunk := buf.String()
-		lastChunk += strings.Repeat("0", chunkSize-len(lastChunk))
-
-		res = append(res, BinaryChunk(lastChunk))
-	}
-
-	return res
+	return ""
 }
 
 // encodeBin encodes str into binary codes string without spaces.
@@ -168,7 +80,8 @@ func getEncodingTable() encodingTable {
 
 // prepareText prepares text to be fit for encode:
 // changes upper case letters to: ! + lower case letter
-//  i.g.: My name is Ted -> !my name is !ted
+//
+//	i.g.: My name is Ted -> !my name is !ted
 func prepareText(str string) string {
 	var buf strings.Builder
 
